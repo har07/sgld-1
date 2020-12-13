@@ -9,13 +9,7 @@ import torch
 import sgld
 import labnotebook
 
-def runall(cuda_device,
-    model_desc):
-
-
-
-
-    db_string = "postgres://postgres:1418@localhost/experiments"
+def runall(cuda_device, model_desc, db_string):
     labnotebook.initialize(db_string)
 
     torch.cuda.set_device(cuda_device)
