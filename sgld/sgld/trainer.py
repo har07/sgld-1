@@ -119,7 +119,7 @@ def train(model, train_loader, test_loader, optimizer, model_desc, cuda_device):
                 state_dict = {}
 
             labnotebook.step_experiment(xp, i,
-                                   trainloss=loss.data[0],
+                                   trainloss=loss.item(),
                                    trainacc=accuracy,
                                    valacc=val_accuracy,
                                    epoch=epoch,
@@ -133,13 +133,13 @@ def train(model, train_loader, test_loader, optimizer, model_desc, cuda_device):
         val_accuracy, _ = sgld.evaluate(model, test_loader)
 
         print('Epoch: {}\tLoss: {:.3f}\tAcc: {:.3f}\tVal Acc: {:.3f}'.format(epoch,
-                                                                np.mean(loss.data[0]),
+                                                                np.mean(loss.item()),
                                                                 np.mean(accuracy),
                                                                 val_accuracy))
 
     print('Total number of steps: {}'.format(i))
 
-    labnotebook.end_experiment(xp, final_trainloss=np.mean(loss.data[0]),
+    labnotebook.end_experiment(xp, final_trainloss=np.mean(loss.item()),
                           final_trainacc=np.mean(accuracy),
                           final_valacc=val_accuracy)
 

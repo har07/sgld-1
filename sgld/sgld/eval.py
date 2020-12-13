@@ -13,7 +13,7 @@ def evaluate(model, test_loader):
         target = target.cuda()
         output = model(data)
         prediction = output.data.max(1)[1]   # first column has actual prob.
-        val_accuracy = np.mean(prediction.eq(target.data))*100
+        val_accuracy = np.mean(prediction.eq(target.data).cpu().numpy())*100
         outputs.append(output)
         accuracies.append(val_accuracy)
         
