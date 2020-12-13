@@ -89,7 +89,7 @@ def train(model, train_loader, test_loader, optimizer, model_desc, cuda_device):
             else:
                 optimizer.step()
             prediction = output.data.max(1)[1]   # first column has actual prob.
-            accuracy = np.mean(prediction.eq(target.data))*100
+            accuracy = np.mean(prediction.eq(target.data).cpu().numpy())*100
 
             statedict = model.state_dict().copy()
             for k, v in statedict.items():
