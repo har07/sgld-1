@@ -1,5 +1,6 @@
 from torch.autograd import Variable
 import torch.nn.functional as F
+from torch import optim
 import numpy as np
 from numpy.random import RandomState
 from .model import *
