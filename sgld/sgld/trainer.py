@@ -5,6 +5,7 @@ import numpy as np
 from numpy.random import RandomState
 from .model import *
 from .sgld_optimizer import *
+from .ggdo2 import *
 from .preproc import *
 import torch
 import sgld
@@ -18,7 +19,7 @@ def runall(cuda_device, model_desc, db_string):
     model = MnistModel()
     train_loader, test_loader = sgld.make_datasets()
     model = model.cuda()
-    if model_desc['optimizer'][:4] == 'sgld':
+    if model_desc['optimizer'] != "sgld.GGDO" and model_desc['optimizer'][:4] == 'sgld':
         optimizer = eval(model_desc['optimizer'])(model.parameters(),
                          lr=model_desc['lr'],
                          addnoise=model_desc['addnoise'])
