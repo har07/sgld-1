@@ -31,11 +31,11 @@ def runall(cuda_device, model_desc, db_string):
                          lr=model_desc['lr'])
 
     if model_desc['preconditioner'] == "sgld.KFAC" :
-        precond = eval(model_desc['optimizer'])(model,
+        precond = eval(model_desc['preconditioner'])(model,
                          model_desc['eps'], model_desc['sua'], model_desc['pi'], model_desc['update_freq'],
                          model_desc['alpha'], model_desc['constraint_norm'])
     elif model_desc['preconditioner'] == "sgld.EKFAC":
-        precond = eval(model_desc['optimizer'])(model,
+        precond = eval(model_desc['preconditioner'])(model,
                          model_desc['eps'], model_desc['sua'], model_desc['ra'], model_desc['update_freq'],
                          model_desc['alpha'])
 
@@ -68,7 +68,7 @@ def sample(model_desc, model_params, percentage_tosample):
 
 
 
-def train(model, train_loader, test_loader, optimizer, percond=None, model_desc, cuda_device):
+def train(model, train_loader, test_loader, optimizer, percond, model_desc, cuda_device):
     i = 0
     lossfunc = lambda x: sgld.lossrate(x,
                                        model_desc['a'],
