@@ -6,6 +6,8 @@ from numpy.random import RandomState
 from .model import *
 from .sgld_optimizer import *
 from .ggdo2 import *
+from .kfac_precond import *
+from .ekfac_precond import *
 from .preproc import *
 import torch
 import sgld
@@ -19,6 +21,7 @@ def runall(cuda_device, model_desc, db_string):
     model = MnistModel()
     train_loader, test_loader = sgld.make_datasets()
     model = model.cuda()
+    precond = None
     if model_desc['optimizer'] != "sgld.GGDO" and model_desc['optimizer'][:4] == 'sgld':
         optimizer = eval(model_desc['optimizer'])(model.parameters(),
                          lr=model_desc['lr'],
@@ -26,11 +29,22 @@ def runall(cuda_device, model_desc, db_string):
     else:
         optimizer = eval(model_desc['optimizer'])(model.parameters(),
                          lr=model_desc['lr'])
+
+    if model_desc['preconditioner'] == "sgld.KFAC" :
+        precond = eval(model_desc['optimizer'])(model,
+                         model_desc['eps'], model_desc['sua'], model_desc['pi'], model_desc['update_freq'],
+                         model_desc['alpha'], model_desc['constraint_norm'])
+    elif model_desc['preconditioner'] == "sgld.EKFAC":
+        precond = eval(model_desc['optimizer'])(model,
+                         model_desc['eps'], model_desc['sua'], model_desc['ra'], model_desc['update_freq'],
+                         model_desc['alpha'])
+
     xp = train(
         model,
         train_loader,
         test_loader,
         optimizer,
+        precond,
         model_desc,
         cuda_device
     )
@@ -54,7 +68,7 @@ def sample(model_desc, model_params, percentage_tosample):
 
 
 
-def train(model, train_loader, test_loader, optimizer, model_desc, cuda_device):
+def train(model, train_loader, test_loader, optimizer, percond=None, model_desc, cuda_device):
     i = 0
     lossfunc = lambda x: sgld.lossrate(x,
                                        model_desc['a'],
@@ -83,6 +97,8 @@ def train(model, train_loader, test_loader, optimizer, model_desc, cuda_device):
             output = model(data)
             loss = F.nll_loss(output, target)
             loss.backward()    # calc gradients
+            if percond:
+                percond.step()
             if model_desc['parametric_step']: # custom lr?
                 if 'a' in model_desc.keys():
                     optimizer.step(lossfunc(i))   # update gradients
