@@ -13,7 +13,7 @@ import torch
 import sgld
 import labnotebook
 
-def runall(cuda_device, model_desc, db_string):
+def runall(cuda_device, model_desc, db_string, clip=0.0):
     labnotebook.initialize(db_string)
 
     torch.cuda.set_device(cuda_device)
@@ -45,6 +45,7 @@ def runall(cuda_device, model_desc, db_string):
         test_loader,
         optimizer,
         precond,
+        clip,
         model_desc,
         cuda_device
     )
@@ -68,7 +69,7 @@ def sample(model_desc, model_params, percentage_tosample):
 
 
 
-def train(model, train_loader, test_loader, optimizer, percond, model_desc, cuda_device):
+def train(model, train_loader, test_loader, optimizer, percond, clip, model_desc, cuda_device):
     i = 0
     lossfunc = lambda x: sgld.lossrate(x,
                                        model_desc['a'],
@@ -97,6 +98,8 @@ def train(model, train_loader, test_loader, optimizer, percond, model_desc, cuda
             output = model(data)
             loss = F.nll_loss(output, target)
             loss.backward()    # calc gradients
+            if clip > 0:    # gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
             if percond:
                 percond.step()
             if model_desc['parametric_step']: # custom lr?
