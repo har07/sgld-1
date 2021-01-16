@@ -13,7 +13,7 @@ import torch
 import sgld
 import labnotebook
 
-def runall(cuda_device, model_desc, db_string, clip=0.0):
+def runall(cuda_device, model_desc, db_string, clip=0.0, burn_in=150, precond_after_burn_in=True):
     labnotebook.initialize(db_string)
 
     torch.cuda.set_device(cuda_device)
@@ -47,7 +47,9 @@ def runall(cuda_device, model_desc, db_string, clip=0.0):
         precond,
         clip,
         model_desc,
-        cuda_device
+        cuda_device,
+        burn_in,
+        precond_after_burn_in
     )
 
     return xp
@@ -69,7 +71,8 @@ def sample(model_desc, model_params, percentage_tosample):
 
 
 
-def train(model, train_loader, test_loader, optimizer, percond, clip, model_desc, cuda_device):
+def train(model, train_loader, test_loader, optimizer, percond, clip, model_desc, 
+            cuda_device, burn_in, precond_after_burn_in):
     i = 0
     lossfunc = lambda x: sgld.lossrate(x,
                                        model_desc['a'],
@@ -84,7 +87,7 @@ def train(model, train_loader, test_loader, optimizer, percond, clip, model_desc
     stdev_acc = []
     std_median = 0
     std_max = 0
-    batch_evaluator = sgld.BatchEvaluator(test_loader)
+    batch_evaluator = sgld.BatchEvaluator(test_loader, burn_in=burn_in)
 
     for epoch in range(model_desc['epochs']):
 
@@ -100,7 +103,7 @@ def train(model, train_loader, test_loader, optimizer, percond, clip, model_desc
             loss.backward()    # calc gradients
             if clip > 0:    # gradient clipping
                 torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-            if percond:
+            if percond and (not precond_after_burn_in or (precond_after_burn_in and i > burn_in)):
                 percond.step()
             if model_desc['parametric_step']: # custom lr?
                 if 'a' in model_desc.keys():
